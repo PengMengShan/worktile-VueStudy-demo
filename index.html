@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+   <meta charset="UTF-8">
+   <title>Document</title>
+   <style>
+   * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      border-collapse: collapse;
+   }
+   
+   .content {
+      width: 1000px;
+      position: relative;
+      margin: 0 auto;
+   }
+   
+   .calender {
+      width: 1000px;
+   }
+   
+   .calender table {
+      width: 100%;
+      border: 1px solid #000;
+   }
+   
+   .calender thead th {
+      border: 1px solid #000;
+      height: 30px;
+      line-height: 30px;
+   }
+   
+   .calender tr,
+   .calender td {
+      border: 1px solid #000;
+   }
+   
+   .calender td {
+      height: 100px;
+      vertical-align: top;
+      text-align: right;
+      padding-right: 5px;
+      padding-top: 5px;
+   }
+   
+   .cur {
+      color: red;
+   }
+   
+   .schedule {
+      position: absolute;
+      top: 30px;
+      left: 0;
+   }
+   
+   .box {
+      height: 100px;
+      width: 100px
+   }
+   
+   .schedule table {
+      width: 1000px;
+      position: relative;
+      top: 25px;
+   }
+   
+   .schedule tr {
+      height: 25px;
+   }
+   
+   .thing {
+      background: yellowgreen;
+      border-radius: 9999px;
+   }
+   </style>
+</head>
+
+<body>
+   <div id="app">
+      <div class="content">
+         <div class="calender">
+            <table>
+               <thead>
+                  <th>周日</th>
+                  <th>周一</th>
+                  <th>周二</th>
+                  <th>周三</th>
+                  <th>周四</th>
+                  <th>周五</th>
+                  <th>周六</th>
+               </thead>
+               <tbody>
+                  <tr v-for="(item,index) in calendar.length/7">
+                     <td v-for="item in 7" :class="{cur:calendar[index*7+(item-1)].cur}">{{calendar[index*7+(item-1)].fullday}}</td>
+                  </tr>
+               </tbody>
+            </table>
+         </div>
+         <div class="schedule">
+            <div class="box" v-for="item in schedule">
+               <table>
+                  <tr v-for="tr in item">
+                     <td v-for="td in tr" :colspan="td.colspan" :style="{width: parseInt(1000/7*td.clospan)+'px'}">
+                        <div v-if="td.title" class="thing">{{td.title}}</div>
+                     </td>
+                  </tr>
+               </table>
+            </div>
+         </div>
+      </div>
+   </div>
+</body>
+
+</html>
+<script src="vue.min.js"></script>
+<script>
+new Vue({
+   el: "#app",
+   data: {
+      year: 2017,
+      month: 7,
+      morenshuju:[
+            {start:20170625,end:20170705,title:"第一件事"},
+            {start:20170705,end:20170726,title:"第二件事"},
+            {start:20170708,end:20170713,title:"第三件事"},
+            {start:20170718,end:20170729,title:"第四件事"},
+            {start:20170715,end:20170724,title:"第五件事"},
+            {start:20170727,end:20170728,title:"吃饭睡觉"},
+            {start:20170729,end:20170730,title:"又一次"},
+      ]
+   },
+   computed: {
+      calendar() {
+         var arr = [];
+         var nowMonthDay = new Date(this.year, this.month, 0).getDate();
+         var lastMonthDay = new Date(this.year, this.month - 1, 0).getDate();
+         var nowMonthFirstWeek = new Date(this.year, this.month - 1).getDay();
+         var pmonth = this.month == 1 ? 12 : this.month - 1;
+         var nmonth = this.month == 12 ? 1 : this.month + 1;
+         var pyear = this.month == 1 ? this.year - 1 : this.year;
+         var nyear = this.month == 12 ? this.year + 1 : this.year;
+
+         function buling(n) {
+            return n.toString().length == 2 ? n.toString() : "0" + n.toString();
+         }
+
+         while (nowMonthFirstWeek--) {
+            arr.unshift({
+               day: lastMonthDay,
+               cur: true,
+               fullday: `${pyear}${buling(pmonth)}${buling(lastMonthDay)}`
+            });
+            lastMonthDay--;
+         }
+         var _a = 1;
+         while (nowMonthDay--) {
+            arr.push({
+               day: _a,
+               cur: false,
+               fullday: `${this.year}${buling(this.month)}${buling(_a)}`
+            });
+            _a++;
+         }
+         var nextNowMonthDay = arr.length > 35 ? 42 - arr.length : 35 - arr.length;
+         _a = 1;
+         while (nextNowMonthDay--) {
+            arr.push({
+               day: _a,
+               cur: true,
+               fullday: `${nyear}${buling(nmonth)}${buling(_a)}`
+            });
+            _a++
+         }
+         return arr;
+      },
+      schedule() {
+         var arr = [];
+         for (var i = 0; i < this.calendar.length / 7; i++) {
+            arr.push([]);
+            for (var j = 0; j < 3; j++) {
+               arr[i].push([]);
+               for (var k = 0; k < 7; k++) {
+                  arr[i][j].push({
+                     colspan: 1,
+                     fullday: this.calendar[i * 7 + k].fullday,
+                     xingqi:k
+                  });
+               }
+            }
+         }
+            this.morenshuju.forEach(function(item){
+            	var end = new Date(item.end.toString().substr(0,4),item.end.toString().substr(4,2) - 1,item.end.toString().substr(6,2));
+            	var start = new Date(item.start.toString().substr(0,4),item.start.toString().substr(4,2)-1,item.start.toString().substr(6,2));
+            	var during = (end-start)/1000/60/60/24 + 1;
+            	var flag = false;
+            	arr.forEach(function(week,weekidx){
+            		for (var i = 0; i < 3; i++) {
+            			for(var j = 0; j<7;j++){
+            				if(week[i][j]){
+            					if(week[i][j].fullday == item.start && !flag){
+            						var nowWeekDuring = during + week[i][j].xingqi<=7?during:7-week[i][j],xingqi;
+            						week[i][j].title = item.title;
+            						week[i][j].colsapn = nowWeekDuring;
+            						week[i].splice(j+1,during-1);
+            						flag = true;
+            						var rest =during - nowWeekDuring;
+            						var count = 0 ;
+            						while (rest>0){
+            							count++;
+            							var nextWeekDuring = rest >= 7?7:rest
+            							for (var ii = 0; ii < 3; ii++) {
+            								if(arr[count+weekidx][ii][0].title){
+            									continue;
+            								}
+            								arr[count+weekidx][ii][0].title = item.title;
+            								arr[count+weekidx][ii][0].colspan = nextWeekDuring;
+            								arr[count+weekidx][ii].splice(1,nextWeekDuring-1);
+            								break;
+            							}	
+            							rest = 7;
+            						}
+            					}
+            				}
+            			}
+            		}
+            	})
+            })
+
+         return arr
+      }
+
+   }
+})
+</script>
